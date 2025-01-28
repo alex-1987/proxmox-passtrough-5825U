@@ -233,7 +233,7 @@ hostpci0: 0000:05:00.0,romfile=vbios_5825U.bin,x-vga=1
 hostpci1: 0000:05:00.1,romfile=AMDGopDriver-5825U.rom
 ```
 
-## Check CPU in Dev List
+## Check IGPU works
 ---------------------------
 
 Check if the CPU is in the dev list by running:
@@ -244,6 +244,24 @@ ls /dev/dri/
 The output should look something like this:
 ```
 by-path  card0  renderD128
+```
+
+Check with lspci the driver in use:
+```bash
+ lspci -nnk | grep AMD -A 3
+```
+
+output:
+```
+06:10.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Barcelo [1002:15e7] (rev c1)
+        Subsystem: Advanced Micro Devices, Inc. [AMD/ATI] Barcelo [1002:0123]
+        Kernel driver in use: amdgpu
+        Kernel modules: amdgpu
+06:11.0 Audio device [0403]: Advanced Micro Devices, Inc. [AMD/ATI] Renoir Radeon High Definition Audio Controller [1002:1637]
+        Subsystem: Advanced Micro Devices, Inc. [AMD/ATI] Renoir Radeon High Definition Audio Controller [1002:1637]
+        Kernel driver in use: snd_hda_intel
+        Kernel modules: snd_hda_intel
+06:12.0 Ethernet controller [0200]: Red Hat, Inc. Virtio network device [1af4:1000]
 ```
 
 ## VM Config
