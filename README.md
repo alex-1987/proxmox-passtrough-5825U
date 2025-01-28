@@ -237,7 +237,7 @@ hostpci1: 0000:05:00.1,romfile=AMDGopDriver-5825U.rom
 ---------------------------
 ### Run these in the VM where you passed through the IGPU
 
-### Check if the CPU is in the dev list
+#### Check if the CPU is in the dev list
 ```bash
 ls /dev/dri/
 ```
@@ -247,7 +247,7 @@ The output should look something like this:
 by-path  card0  renderD128
 ```
 
-###Check with lspci the driver in use:
+#### Check with lspci the driver in use:
 ```bash
  lspci -nnk | grep AMD -A 3
 ```
