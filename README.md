@@ -1,48 +1,59 @@
-# proxmox passtrough
 
-Thanks a lot its a merge of this URL and my tests:
-<https://github.com/isc30/ryzen-7000-series-proxmox?tab=readme-ov-file>
+# Proxmox Passthrough Guide
+================================
 
+## Introduction
+---------------
 
-non-subscription ones to get proxmox updates: 
+Thanks to the contributions of [isc30](https://github.com/isc30/ryzen-7000-series-proxmox?tab=readme-ov-file) and my own tests, I'm happy to share this guide on how to set up Proxmox passthrough.
 
-```javascript
+## Non-Subscription Updates
+---------------------------
+
+To get Proxmox updates without a subscription, run the following command:
+```bash
 bash -c "$(wget -qLO - https://github.com/tteck/Proxmox/raw/main/misc/post-pve-install.sh)"
 ```
 
-Install the CPU Microcode packages: 
+## Install CPU Microcode Packages
+--------------------------------
 
-```javascript
+Install the CPU microcode packages by running:
+```bash
 bash -c "$(wget -qLO - https://github.com/tteck/Proxmox/raw/main/misc/microcode.sh)"
 ```
 
+## Identify AMD/ATI Devices
+---------------------------
 
-```javascript
+Run the following command to identify AMD/ATI devices:
+```bash
 lspci -nn | grep -e 'AMD/ATI'
 ```
 
-```javascript
+### Output
+----------
 
+The output should look something like this:
+```
 05:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Barcelo [1002:15e7] (rev c1)
 05:00.1 Audio device [0403]: Advanced Micro Devices, Inc. [AMD/ATI] Renoir Radeon High Definition Audio Controller [1002:1637]
 ```
 
+## Configure GRUB
+-----------------
 
-Put iommu=pt in grub
-
-```javascript
+Add `iommu=pt` to GRUB by running:
+```bash
 sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet iommu=pt"/g' /etc/default/grub
 update-grub
 ```
 
+## Configure VFIO
+-----------------
 
-put vifo in modules   `options vfio-pci ids=1002:15e7,1002:1637`" must be same then `/lspci -nn | grep -e 'AMD/ATI'`
-
-and softdep to load vifo before other drivers
-
-and blacklist amd and intel
-
-```javascript
+Configure VFIO by adding the following lines to `/etc/modprobe.d/vfio.conf`:
+```bash
 echo "vfio" >> /etc/modules
 echo "vfio_iommu_type1" >> /etc/modules
 echo "vfio_pci" >> /etc/modules
@@ -56,28 +67,26 @@ echo "blacklist amdgpu" >> /etc/modprobe.d/pve-blacklist.conf
 echo "blacklist snd_hda_intel" >> /etc/modprobe.d/pve-blacklist.conf
 ```
 
+## Update Initramfs
+--------------------
 
-\
-```javascript
+Update initramfs by running:
+```bash
 update-initramfs -u -k all
 shutdown -r now
 ```
 
+## Create BIOS .bin File
+-------------------------
 
-## create the bios .bin file
+### Create vbios.c File
 
-Create a the vbios.c file
 
-```javascript
-nano vbios.c
-```
-
-in the host (proxmox) with the following contents:
+Create a `vbios.c` file with the following contents:
 
 <details>
-  <summary>Expand the vbios.c</summary>
-  
-  ```javascript
+  <summary>Expand vbios.c</summary>
+  ```c
   #include <stdint.h>
   #include <stdio.h>
   #include <stdlib.h>
@@ -190,93 +199,85 @@ in the host (proxmox) with the following contents:
       return 0;
   }
   ```
+  
+  ### Compile and Run the Script
+  
+  Compile the script using `gcc` and run it:
+  ```bash
+  gcc vbios.c -o vbios
+  ./vbios
+  ```
 </details>
 
-run the script
+### Download AMDGopDriver-5825U.rom
 
-```javascript
-gcc vbios.c -o vbios
-./vbios
-```
+Download the `AMDGopDriver-5825U.rom` file from [alex-1987/proxmox-passtrough-5825U](https://github.com/alex-1987/proxmox-passtrough-5825U/blob/main/AMDGopDriver-5825U.rom).
 
+### Rename and Move Files
 
-download   AMDGopDriver-5825U.rom
-
-```javascript
-wget https://github.com/alex-1987/proxmox-passtrough-5825U/blob/main/AMDGopDriver-5825U.rom
-```
-
-rename and move the files
-```javascript
-mv vbios_*.bin vbios_5825U.bin 
+Rename and move the files to the correct locations:
+```bash
+mv vbios_*.bin vbios_5825U.bin
 mv vbios_5825U.bin /usr/share/kvm/
 mv AMDGopDriver-5825U.rom /usr/share/kvm/
 ```
 
+## Update PVE Config
+---------------------
 
-update your pve config
-
-```javascript
-nano /etc/pve/qemu-server/1010.conf
-```
-
-put vifo in modules   `options vfio-pci ids=1002:15e7,1002:1637`" must be same then `/lspci -nn | grep -e 'AMD/ATI'`
-
+Update your PVE config file (`/etc/pve/qemu-server/1010.conf`) with the following lines:
 ```javascript
 hostpci0: 0000:05:00.0,romfile=vbios_5825U.bin,x-vga=1
 hostpci1: 0000:05:00.1,romfile=AMDGopDriver-5825U.rom
 ```
 
+## Check CPU in Dev List
+---------------------------
 
-check if the CPU is in the dev list: in the VM
-
-```javascript
+Check if the CPU is in the dev list by running:
+```bash
 ls /dev/dri/
 ```
 
-output:  (renderD128)
-
-```javascript
-
+The output should look something like this:
+```
 by-path  card0  renderD128
 ```
 
+## VM Config
+-------------
 
-
-my vm-config (/etc/pve/qemu-server/1010.conf):
-<details>
-  <summary>Expand VM-Config</summary>
-  
-  ```javascript
-  agent: 1
-  bios: ovmf
-  boot: order=scsi0;ide2;net0
-  cores: 10
-  cpu: x86-64-v2-AES
-  efidisk0: local-lvm:vm-1010-disk-0,efitype=4m,pre-enrolled-keys=1,size=4M
-  hostpci0: 0000:05:00.0,romfile=vbios_5825U.bin,x-vga=1
-  hostpci1: 0000:05:00.1,romfile=AMDGopDriver-5825U.rom
-  ide2: none,media=cdrom
-  machine: q35
-  memory: 16384
-  meta: creation-qemu=9.0.2,ctime=1736754641
-  name: Docker-Server
-  net0: virtio=BC:24:11:A2:E5:CD,bridge=vmbr1,firewall=1
-  numa: 0
-  ostype: l26
-  scsi0: data:vm-1010-disk-1,iothread=1,size=32G
-  scsi1: data:vm-1010-disk-6,size=5000G
-  scsi2: data:vm-1010-disk-3,iothread=1,size=100G
-  scsi3: data:vm-1010-disk-4,iothread=1,size=1000G
-  scsi4: data:vm-1010-disk-5,iothread=1,size=1T
-  scsihw: virtio-scsi-single
-  serial0: socket
-  smbios1: uuid=5b04eac1-df70-4d31-b278-7208b2d76055
-  sockets: 1
-  unused0: data:vm-1010-disk-0
-  unused1: data:vm-1010-disk-2
-  usb0: host=1-4
-  vga: none
-  vmgenid: 4a8a252e-4fc5-460b-a436-443fd12d0274
-  ```
-</details>
+Here is an example VM config file (`/etc/pve/qemu-server/1010.conf`):
+```javascript
+agent: 1
+bios: ovmf
+boot: order=scsi0;ide2;net0
+cores: 10
+cpu: x86-64-v2-AES
+efidisk0: local-lvm:vm-1010-disk-0,efitype=4m,pre-enrolled-keys=1,size=4M
+hostpci0: 0000:05:00.0,romfile=vbios_5825U.bin,x-vga=1
+hostpci1: 0000:05:00.1,romfile=AMDGopDriver-5825U.rom
+ide2: none,media=cdrom
+machine: q35
+memory: 16384
+meta: creation-qemu=9.0.2,ctime=1736754641
+name: Docker-Server
+net0: virtio=BC:24:11:A2:E5:CD,bridge=vmbr1,firewall=1
+numa: 0
+ostype: l26
+scsi0: data:vm-1010-disk-1,iothread=1,size=32G
+scsi1: data:vm-1010-disk-6,size=5000G
+scsi2: data:vm-1010-disk-3,iothread=1,size=100G
+scsi3: data:vm-1010-disk-4,iothread=1,size=1000G
+scsi4: data:vm-1010-disk-5,iothread=1,size=1T
+scsihw: virtio-scsi-single
+serial0: socket
+smbios1: uuid=5b04eac1-df70-4d31-b278-7208b2d76055
+sockets: 1
+unused0: data:vm-1010-disk-0
+unused1: data:vm-1010-disk-2
+usb0: host=1-4
+vga: none
+vmgenid: 4a8a252e-4fc5-460b-a436-443fd12d0274
+```
+```
