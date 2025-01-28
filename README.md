@@ -251,7 +251,7 @@ Check with lspci the driver in use:
  lspci -nnk | grep AMD -A 3
 ```
 
-output:
+output:  (Kernel driver in use: amdgpu)
 ```
 06:10.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Barcelo [1002:15e7] (rev c1)
         Subsystem: Advanced Micro Devices, Inc. [AMD/ATI] Barcelo [1002:0123]
