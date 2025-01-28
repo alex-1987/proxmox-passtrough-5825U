@@ -73,7 +73,8 @@ nano vbios.c
 ```
 
 in the host (proxmox) with the following contents:
-
+<details>
+  <summary>expand</summary>
 ```javascript
 #include <stdint.h>
 #include <stdio.h>
@@ -187,7 +188,7 @@ int main(int argc, char** argv)
     return 0;
 }
 ```
-
+</details>
 run the script
 
 ```javascript
@@ -224,7 +225,7 @@ hostpci1: 0000:05:00.1,romfile=AMDGopDriver-5825U.rom
 ```
 
 
-check if the CPU is in the dev list:$
+check if the CPU is in the dev list: in the VM
 
 ```javascript
 ls /dev/dri/
@@ -240,7 +241,8 @@ by-path  card0  renderD128
 
 \
 my vm-config:
-
+<details>
+  <summary>expand</summary>
 ```javascript
 agent: 1
 bios: ovmf
@@ -273,3 +275,4 @@ usb0: host=1-4
 vga: none
 vmgenid: 4a8a252e-4fc5-460b-a436-443fd12d0274
 ```
+</details>details>
