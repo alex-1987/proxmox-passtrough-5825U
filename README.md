@@ -199,7 +199,7 @@ gcc vbios.c -o vbios
 download   AMDGopDriver-5825U.rom
 
 ```javascript
-wget https://github.com/isc30/ryzen-7000-series-proxmox/blob/main/AMDGopDriver-5825U.rom
+wget https://github.com/alex-1987/proxmox-passtrough-5825U/blob/main/AMDGopDriver-5825U.rom
 ```
 
 rename and move the files
