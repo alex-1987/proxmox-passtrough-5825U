@@ -86,7 +86,8 @@ Create a `vbios.c` file with the following contents:
 
 <details>
   <summary>Expand vbios.c</summary>
-  ```c
+  
+  ```
   #include <stdint.h>
   #include <stdio.h>
   #include <stdlib.h>
@@ -199,15 +200,16 @@ Create a `vbios.c` file with the following contents:
       return 0;
   }
   ```
-  
-  ### Compile and Run the Script
-  
-  Compile the script using `gcc` and run it:
-  ```bash
-  gcc vbios.c -o vbios
-  ./vbios
-  ```
 </details>
+
+### Compile and Run the Script
+  
+Compile the script using `gcc` and run it:
+```bash
+gcc vbios.c -o vbios
+./vbios
+```
+
 
 ### Download AMDGopDriver-5825U.rom
 
