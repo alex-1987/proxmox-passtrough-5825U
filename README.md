@@ -226,8 +226,11 @@ mv AMDGopDriver-5825U.rom /usr/share/kvm/
 
 ## Update PVE Config
 ---------------------
-
-Update your PVE config file (`/etc/pve/qemu-server/1010.conf`) with the following lines:
+Update your PVE config file And take care that it's matches of the output
+```bash
+lspci -nn | grep -e 'AMD/ATI'
+```
+(`/etc/pve/qemu-server/1010.conf`) with the following lines:
 ```javascript
 hostpci0: 0000:05:00.0,romfile=vbios_5825U.bin,x-vga=1
 hostpci1: 0000:05:00.1,romfile=AMDGopDriver-5825U.rom
